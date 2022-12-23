@@ -1,6 +1,6 @@
 ---
 
-- hosts: all
+- hosts: guests
   become: true
   tasks:
 
@@ -10,14 +10,14 @@
     yum:
       update_only: yes
       update_cache: yes
-    when: ansible_distribution == "CentOS" and ansible_virtualization_role == "guest"
+    when: ansible_distribution == "CentOS"
 
   - name: install updates (Ubuntu and Debian)
     tags: always
     apt:
       upgrade: dist
       update_cache: yes
-    when: ansible_distribution in "Ubuntu,Debian" and ansible_virtualization_role == "guest"
+    when: ansible_distribution in "Ubuntu,Debian"
 
   - name: install qemu guest agent
     tags: always
@@ -26,14 +26,12 @@
         - qemu-guest-agent
       state: latest
       update_cache: yes
-    when: ansible_virtualization_role == "guest"
 
   - name: create group scott
     tags: always
     group: 
       name: scott
       state: present
-    when: ansible_virtualization_role == "guest"
 
   - name: create user scott
     tags: always
@@ -43,14 +41,18 @@
       create_home: true
       home: /home/scott
       state: present
-    when: ansible_virtualization_role == "guest"
       
-  - name: add ssh key for scott
+  - name: add ssh key for scott (ansible)
     tags: always
     authorized_key:
       user: scott
       key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAw6N/KPiFHUY//jQPga50o5zuoBxcjPn1t6r5QPhrj7 scott@ansible"
-    when: ansible_virtualization_role == "guest"
+    
+  - name: add ssh key for scott (darkstar)
+    tags: always
+    authorized_key:
+      user: scott
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDW4FTobO2KAdqF+wMjoIAwEaQhDf4qS6bJWX+tnvS++ scott"
     
   - name: add sudoers file for scott
     tags: always
