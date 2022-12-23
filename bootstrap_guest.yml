@@ -1,0 +1,71 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+
+  - name: install updates (CentOS)
+    tags: always
+    yum:
+      update_only: yes
+      update_cache: yes
+    when: ansible_distribution == "CentOS" and ansible_virtualization_role == "guest"
+
+  - name: install updates (Ubuntu and Debian)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: yes
+    when: ansible_distribution in "Ubuntu,Debian" and ansible_virtualization_role == "guest"
+
+  - name: install qemu guest agent
+    tags: always
+    package:
+      name: 
+        - qemu-guest-agent
+      state: latest
+      update_cache: yes
+    when: ansible_virtualization_role == "guest"
+
+  - name: create group scott
+    tags: always
+    group: 
+      name: scott
+      state: present
+    when: ansible_virtualization_role == "guest"
+
+  - name: create user scott
+    tags: always
+    user:
+      name: scott
+      group: scott
+      create_home: true
+      home: /home/scott
+      state: present
+    when: ansible_virtualization_role == "guest"
+      
+  - name: add ssh key for scott
+    tags: always
+    authorized_key:
+      user: scott
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAw6N/KPiFHUY//jQPga50o5zuoBxcjPn1t6r5QPhrj7 scott@ansible"
+    when: ansible_virtualization_role == "guest"
+    
+  - name: add sudoers file for scott
+    tags: always
+    copy:
+      src: sudoer_scott
+      dest: /etc/sudoers.d/scott
+      owner: root
+      group: root
+      mode: 0440
+
+  - name: add sudoers file for ansible
+    tags: always
+    copy:
+      src: sudoer_ansible
+      dest: /etc/sudoers.d/ansible
+      owner: root
+      group: root
+      mode: 0440
